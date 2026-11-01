@@ -99,6 +99,21 @@ bool PlayerObject::getHasRingJumped()
     return hasRingJumped_;
 }
 
+void PlayerObject::stopRotation()
+{
+    stopActionByTag(kTagRotateAction);
+
+    if (getRotation() != 0.0f) {
+        float clamped = getRotation() % 360;
+
+        float rotation = (flipMod() == 1)
+            ? roundf(clamped / 90.0f) * 90
+            : roundf(clamped / -90.0f) * -90;
+
+        setRotation(rotation);
+    }
+}
+
 void PlayerObject::runRotateAction()
 {
   stopRotation();
@@ -107,6 +122,19 @@ void PlayerObject::runRotateAction()
   rotateAction->setTag(kTagRotateAction);
 
   runAction(rotateAction);
+}
+
+void PlayerObject::spawnCircle()
+{
+    CCCircleWave* circle = CCCircleWave::create(70.0f, 2.0f, 0.3f, true);
+
+    circle->setColor(getColor());
+    circle->setPosition(getPosition());
+
+    gameLayer_->addChild(circle, 0);
+
+    circle->followObject(this);
+    circle->setCircleMode(CircleMode::Outline);
 }
 
 void PlayerObject::pushButton(PlayerButton button)
@@ -135,6 +163,46 @@ bool PlayerObject::playerIsFalling()
     return !gravityFlipped_
         ? yVelocity_ < gravity_ + gravity_
         : yVelocity_ > gravity_ + gravity_;
+}
+
+void PlayerObject::hitGround(bool noParticle)
+{
+    yVelocity_ = 0.0f;
+
+    if (!onGround_ && !noParticle) {
+
+        CCParticleSystemQuad* particles = useFirstLandParticles_
+            ? landParticles1_
+            : landParticles2_;
+
+        useFirstLandParticles_ = !useFirstLandParticles_;
+
+        CCPoint offset = ccp(0.0f, flipMod() * -15.0f);
+        particles->setPosition(cppAdd(particles->getPosition(), ));
+
+        CCParticleSystem::resetSystem(particles);
+    }
+
+    onGround_ = true;
+    canJump_ = true;
+
+    if (getActionByTag(kTagRotateAction))
+        stopRotation();
+
+    lastGroundPos_ = getPosition();
+
+    if (!flyMode_)
+        deactivateStreak();
+
+    if (!flyMode_)
+        tryPlaceCheckpoint();
+
+    unk355_ = false;
+}
+
+CCPoint PlayerObject::getRealPosition()
+{
+    return getPosition();
 }
 
 void PlayerObject::lockPlayer()

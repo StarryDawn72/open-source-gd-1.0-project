@@ -99,7 +99,7 @@ bool PlayerObject::getHasRingJumped()
     return hasRingJumped_;
 }
 
-void PlayerObject::runRotateAction(PlayerObject* this)
+void PlayerObject::runRotateAction()
 {
   stopRotation();
   
@@ -107,6 +107,22 @@ void PlayerObject::runRotateAction(PlayerObject* this)
   rotateAction->setTag(kTagRotateAction);
 
   runAction(rotateAction);
+}
+
+void PlayerObject::pushButton(PlayerButton button)
+{
+    if (!isLocked_ && button == PlayerButton::Jump) {
+        upKeyDown_ = true;
+        canRingJump_ = true;
+    }
+}
+
+void PlayerObject::releaseButton(PlayerButton button)
+{
+    if (button == PlayerButton::Jump) {
+        upKeyDown_ = false;
+        canRingJump_ = false;
+    }
 }
 
 int PlayerObject::flipMod()
